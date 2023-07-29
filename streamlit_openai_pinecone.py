@@ -49,7 +49,7 @@ if submit_button:
             st.write(f"{match['score']:.2f}: {sutta_url}")
 
             # Get similar suttas for each match
-            similar_sutta_results = pinecone_index.query([match['embedding']], top_k=6, include_metadata=True)
+            similar_sutta_results = pinecone_index.query([match['metadata']['embedding']], top_k=6, include_metadata=True)
 
             # Display similar suttas
             st.write('Similar Suttas:')
