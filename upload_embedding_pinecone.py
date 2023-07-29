@@ -1,75 +1,71 @@
+import os
+import json
 import pinecone
 import openai
-
-# Initialize OpenAI
-# openai = OpenAI(api_key="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")
+import time
 
 # Specify the index name
 index_name = "buddhism-sutta"
 
 # Initialize Pinecone
-pinecone.init(api_key="23c095af-b6e1-453a-98e4-b09a2804ba46", environment="us-central1-gcp")
+pinecone.init(api_key="58e4f46c-e4b8-4dfd-9ea9-42867c1e59c5", environment="us-central1-gcp")
 
 # Create a new vector index only if it doesn't already exist
 if index_name not in pinecone.list_indexes():
+    print("Creating index...")
     pinecone.create_index(
         index_name,
         dimension=1536,  # dimensionality of text-embedding-ada-002
         metric='cosine',
     )
+    print("Index created.")
 
 index = pinecone.Index(index_name)
 
 # Generate Embeddings and Upload
-def generate_and_upload(text):
-    embeddings = get_embedding(text)
-
-    index.upsert([("AN1.11-20", embeddings, {"sutta": "AN1.11-20", "sutta_name": "Nīvaraṇappahānavagga", "text": text})])
+def generate_and_upload(file_name, chunks):
+    sutta_id = file_name.split('_')[0]  # Extract the sutta ID from filename
+    for i, text in enumerate(chunks):
+        print(f"Generating embedding for {sutta_id}-{i+1}...")
+        embeddings = get_embedding(text)
+        print(f"Uploading {sutta_id}-{i+1}...")
+        index.upsert([(f"{sutta_id}-{i+1}", embeddings, {"sutta": sutta_id, "text": text})])
+        print(f"Uploaded {sutta_id}-{i+1}.")
 
 def get_embedding(text, model="text-embedding-ada-002"):
-   return openai.Embedding.create(input = [text], model=model)['data'][0]['embedding']
+   embedding = openai.Embedding.create(input = [text], model=model)['data'][0]['embedding']
+   print("Waiting 20 seconds...")
+   time.sleep(20)
+   return embedding
 
-text = """
-11
+def split_text(text, token_limit=20000):
+    words = text.split()
+    chunks = []
+    current_chunk = []
+    current_length = 0
 
-“Mendicants, I do not see a single thing that gives rise to sensual desire, or, when it has arisen, makes it increase and grow like the feature of beauty. When you apply the mind irrationally to the feature of beauty, sensual desire arises, and once arisen it increases and grows.”
+    for word in words:
+        if current_length + len(word) <= token_limit:
+            current_chunk.append(word)
+            current_length += len(word)
+        else:
+            chunks.append(' '.join(current_chunk))
+            current_chunk = [word]
+            current_length = len(word)
+    
+    chunks.append(' '.join(current_chunk))  # Add the last chunk
+    return chunks
 
-12
+# Load text from files in the same directory
+for file_name in os.listdir():
+    if file_name.endswith('.json'):
+        print(f"Processing {file_name}...")
+        with open(file_name, 'r') as file:
+            text = file.read()  # Get the entire file content as text
+            chunks = split_text(text)
+            print(f"Uploading chunks for {file_name}...")
+            generate_and_upload(file_name, chunks)
+        print(f"Deleting {file_name}...")
+        os.remove(file_name)
+        print(f"Deleted {file_name}.")
 
-“Mendicants, I do not see a single thing that gives rise to ill will, or, when it has arisen, makes it increase and grow like the feature of harshness. When you apply the mind irrationally to the feature of harshness, ill will arises, and once arisen it increases and grows.”
-
-13
-
-“Mendicants, I do not see a single thing that gives rise to dullness and drowsiness, or, when they have arisen, makes them increase and grow like discontent, sloth, yawning, sleepiness after eating, and mental sluggishness. When you have a sluggish mind, dullness and drowsiness arise, and once arisen they increase and grow.”
-
-14
-
-“Mendicants, I do not see a single thing that gives rise to restlessness and remorse, or, when they have arisen, makes them increase and grow like an unsettled mind. When you have no peace of mind, restlessness and remorse arise, and once arisen they increase and grow.”
-
-15
-
-“Mendicants, I do not see a single thing that gives rise to doubt, or, when it has arisen, makes it increase and grow like irrational application of mind. When you apply the mind irrationally, doubt arises, and once arisen it increases and grows.”
-
-16
-
-“Mendicants, I do not see a single thing that prevents sensual desire from arising, or, when it has arisen, abandons it like the feature of ugliness. When you apply the mind rationally to the feature of ugliness, sensual desire does not arise, or, if it has already arisen, it’s given up.”
-
-17
-
-“Mendicants, I do not see a single thing that prevents ill will from arising, or, when it has arisen, abandons it like the heart’s release by love. When you apply the mind rationally on the heart’s release by love, ill will does not arise, or, if it has already arisen, it’s given up.”
-
-18
-
-“Mendicants, I do not see a single thing that prevents dullness and drowsiness from arising, or, when they have arisen, gives them up like the elements of initiative, persistence, and vigor. When you’re energetic, dullness and drowsiness do not arise, or, if they’ve already arisen, they’re given up.”
-
-19
-
-“Mendicants, I do not see a single thing that prevents restlessness and remorse from arising, or, when they have arisen, gives them up like peace of mind. When your mind is peaceful, restlessness and remorse do not arise, or, if they’ve already arisen, they’re given up.”
-
-20
-
-“Mendicants, I do not see a single thing that prevents doubt from arising, or, when it has arisen, gives it up like rational application of mind. When you apply the mind rationally, doubt does not arise, or, if it’s already arisen, it’s given up.”
-"""
-
-# Call the function with your text
-generate_and_upload(text)
