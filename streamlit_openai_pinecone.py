@@ -5,7 +5,7 @@ import pinecone
 # Pinecone and OpenAI setup
 pinecone_api_key = "23c095af-b6e1-453a-98e4-b09a2804ba46"
 pinecone_env = "us-central1-gcp"
-openai_api_key = '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'
+openai_api_key = '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'
 openai.api_key = openai_api_key
 
 st.title('OpenAI-Pinecone Search App')
