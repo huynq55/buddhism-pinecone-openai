@@ -10,11 +10,15 @@ openai.api_key = openai_api_key
 
 st.title('OpenAI-Pinecone Search App')
 
-# Input query
-search_query = st.text_input("Enter your search query")
+# Start form
+with st.form(key='search_form'):
+    # Input query
+    search_query = st.text_input("Enter your search query")
+    # Button for submitting the form
+    submit_button = st.form_submit_button('Search')
 
-# Perform search on button press
-if st.button('Search'):
+# Perform search on form submission
+if submit_button:
     # Check if query is empty
     if not search_query:
         st.write('Please enter a search query')
