@@ -35,27 +35,18 @@ if submit_button:
         search_results = pinecone_index.query([query_embedding], top_k=10, include_metadata=True)
 
         base_url = "https://suttacentral.net/{}/en/sujato"
-
-        # Filter results, keeping highest score per sutta
-        filtered_results = {}
+        # Iterate over matches and output to Streamlit
         for match in search_results['matches']:
-            sutta = match['metadata']['sutta'].lower()
-            if sutta not in filtered_results or match['score'] > filtered_results[sutta]['score']:
-                filtered_results[sutta] = match
-
-        # Iterate over filtered matches and output to Streamlit
-        for sutta, match in filtered_results.items():
-            sutta_url = base_url.format(sutta)
+            sutta_url = base_url.format(match['metadata']['sutta'].lower())
             st.write(f"{match['score']:.2f}: {sutta_url}")
 
-            # Fetch the embedding for the match sutta
-            fetched_embedding = pinecone_index.fetch(ids=[match['id']])['vectors'][match['id']]['values']
+            # Get the sutta vector
+            sutta_vector = pinecone_index.fetch(ids=[match['id']])['vectors'][match['id']]['values']
 
-            # Get similar suttas for each match
-            similar_sutta_results = pinecone_index.query([fetched_embedding], top_k=6, include_metadata=True)
+            # Find the most similar suttas
+            similar_suttas = pinecone_index.query([sutta_vector], top_k=6, include_metadata=True)
 
-            # Display similar suttas
-            st.write('Similar Suttas:')
-            for similar_match in similar_sutta_results['matches'][1:]:  # Skip first match as it will be the sutta itself
-                similar_sutta_url = base_url.format(similar_match['metadata']['sutta'].lower())
-                st.write(f"{similar_match['score']:.2f}: {similar_sutta_url}")
+            # Skip the first result (as it will be the sutta itself)
+            for similar_sutta in similar_suttas['matches'][1:]:
+                similar_sutta_url = base_url.format(similar_sutta['metadata']['sutta'].lower())
+                st.write(f"\tSimilar: {similar_sutta['score']:.2f}: {similar_sutta_url}")
