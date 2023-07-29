@@ -48,8 +48,11 @@ if submit_button:
             sutta_url = base_url.format(sutta)
             st.write(f"{match['score']:.2f}: {sutta_url}")
 
+            # Fetch the embedding for the match sutta
+            fetched_embedding = pinecone_index.fetch(ids=[match['id']])['vectors'][match['id']]['values']
+
             # Get similar suttas for each match
-            similar_sutta_results = pinecone_index.query([match['values']], top_k=6, include_metadata=True)
+            similar_sutta_results = pinecone_index.query([fetched_embedding], top_k=6, include_metadata=True)
 
             # Display similar suttas
             st.write('Similar Suttas:')
