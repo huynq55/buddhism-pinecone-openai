@@ -52,9 +52,17 @@ if submit_button:
             sutta_vector = pinecone_index.fetch(ids=[match['id']])['vectors'][match['id']]['values']
 
             # Find the most similar suttas
-            similar_suttas = pinecone_index.query([sutta_vector], top_k=10, include_metadata=True)
+            similar_suttas = pinecone_index.query([sutta_vector], top_k=50, include_metadata=True)
+
+            # Deduplicate similar suttas by sutta
+            similar_by_sutta = {}
+            for similar_sutta in similar_suttas['matches']:
+                sutta = similar_sutta['metadata']['sutta']
+                if sutta not in similar_by_sutta or similar_sutta['score'] > similar_by_sutta[sutta]['score']:
+                    similar_by_sutta[sutta] = similar_sutta
 
             # Skip the first result (as it will be the sutta itself)
-            for similar_sutta in similar_suttas['matches'][1:]:
-                similar_sutta_url = base_url.format(similar_sutta['metadata']['sutta'].lower())
-                st.write(f"\tSimilar: {similar_sutta['score']:.2f}: {similar_sutta_url}")
+            for similar_sutta in similar_by_sutta.values():
+                if similar_sutta['id'] != match['id']:
+                    similar_sutta_url = base_url.format(similar_sutta['metadata']['sutta'].lower())
+                    st.write(f"\tSimilar: {similar_sutta['score']:.2f}: {similar_sutta_url}")
