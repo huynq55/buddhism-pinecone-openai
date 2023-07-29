@@ -32,7 +32,7 @@ if submit_button:
         query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
 
         # Search in Pinecone
-        search_results = pinecone_index.query([query_embedding], top_k=100, include_metadata=True)
+        search_results = pinecone_index.query([query_embedding], top_k=20, include_metadata=True)
 
         base_url = "https://suttacentral.net/{}/en/sujato"
 
@@ -52,7 +52,7 @@ if submit_button:
             sutta_vector = pinecone_index.fetch(ids=[match['id']])['vectors'][match['id']]['values']
 
             # Find the most similar suttas
-            similar_suttas = pinecone_index.query([sutta_vector], top_k=6, include_metadata=True)
+            similar_suttas = pinecone_index.query([sutta_vector], top_k=10, include_metadata=True)
 
             # Skip the first result (as it will be the sutta itself)
             for similar_sutta in similar_suttas['matches'][1:]:
