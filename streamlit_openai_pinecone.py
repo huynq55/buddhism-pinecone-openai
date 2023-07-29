@@ -32,11 +32,19 @@ if submit_button:
         query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
 
         # Search in Pinecone
-        search_results = pinecone_index.query([query_embedding], top_k=10, include_metadata=True)
+        search_results = pinecone_index.query([query_embedding], top_k=100, include_metadata=True)
 
         base_url = "https://suttacentral.net/{}/en/sujato"
-        # Iterate over matches and output to Streamlit
+
+        # Deduplicate matches by sutta
+        matches_by_sutta = {}
         for match in search_results['matches']:
+            sutta = match['metadata']['sutta']
+            if sutta not in matches_by_sutta or match['score'] > matches_by_sutta[sutta]['score']:
+                matches_by_sutta[sutta] = match
+
+        # Iterate over deduplicated matches
+        for match in matches_by_sutta.values():
             sutta_url = base_url.format(match['metadata']['sutta'].lower())
             st.write(f"{match['score']:.2f}: {sutta_url}")
 
