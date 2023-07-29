@@ -32,7 +32,7 @@ if submit_button:
         query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
 
         # Search in Pinecone
-        search_results = pinecone_index.query([query_embedding], top_k=20, include_metadata=True)
+        search_results = pinecone_index.query([query_embedding], top_k=10, include_metadata=True)
 
         base_url = "https://suttacentral.net/{}/en/sujato"
 
