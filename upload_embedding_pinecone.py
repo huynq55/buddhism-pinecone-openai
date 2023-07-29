@@ -8,7 +8,7 @@ import time
 index_name = "buddhism-sutta"
 
 # Initialize Pinecone
-pinecone.init(api_key="58e4f46c-e4b8-4dfd-9ea9-42867c1e59c5", environment="us-central1-gcp")
+pinecone.init(api_key="<your api key>", environment="us-central1-gcp")
 
 # Create a new vector index only if it doesn't already exist
 if index_name not in pinecone.list_indexes():
