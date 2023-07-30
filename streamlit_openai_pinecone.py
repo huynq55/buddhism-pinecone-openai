@@ -62,7 +62,7 @@ if submit_button:
                     similar_by_sutta[sutta] = similar_sutta
         
             # Create an expandable section for similar suttas
-            with st.beta_expander('Show similar suttas'):
+            with st.expander('Show similar suttas'):
                 # Skip the first result (as it will be the sutta itself)
                 for similar_sutta in similar_by_sutta.values():
                     if similar_sutta['id'] != match['id']:
