@@ -1,2 +1,4 @@
 openai
 pinecone-client
+torch
+git+https://github.com/naver/splade.git
