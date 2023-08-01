@@ -25,35 +25,32 @@ pinecone_env = "us-central1-gcp"
 openai_api_key = st.secrets['OPENAI_API_KEY']
 openai.api_key = openai_api_key
 
+pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
+pinecone_index_name = 'buddhism-sutta'
+pinecone_index = pinecone.Index(pinecone_index_name)
+
 st.title('OpenAI-Pinecone Search App')
 
 with st.form(key='search_form'):
     search_query = st.text_input("Enter your search query")
     submit_button = st.form_submit_button('Search')
 
-if submit_button:
-    if not search_query:
-        st.write('Please enter a search query')
-    else:
-        pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
-        pinecone_index_name = 'buddhism-sutta'
-        pinecone_index = pinecone.Index(pinecone_index_name)
-        query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
-        sparse_vector = get_sparse_vector(search_query)
-        search_results = pinecone_index.query(vector=query_embedding, sparse_vector=sparse_vector, top_k=10, include_metadata=True)
+word_extractor = re.compile(r'\w+')
 
-        base_url = "https://suttacentral.net/{}/en/sujato"
+if submit_button and search_query:
+    query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
+    sparse_vector = get_sparse_vector(search_query)
+    search_results = pinecone_index.query(vector=query_embedding, sparse_vector=sparse_vector, top_k=10, include_metadata=True)
 
-        query_words = set(re.findall(r'\w+', search_query.lower())) # Extract words from query
+    base_url = "https://suttacentral.net/{}/en/sujato"
+    query_words = set(word_extractor.findall(search_query.lower()))
 
-        for match in search_results['matches']:
-            sutta_url = base_url.format(match['metadata']['sutta'].lower())
+    for match in search_results['matches']:
+        sutta_url = base_url.format(match['metadata']['sutta'].lower())
+        text = match['metadata']['text']
+        highlighted_text = re.sub(r'(\b' + r'\b|\b'.join(query_words) + r'\b)', r'**\1**', text, flags=re.IGNORECASE)
 
-            # Extract text from metadata
-            text = match['metadata']['text']
-
-            # Highlight matching words, preserving original formatting
-            highlighted_text = re.sub(r'(\b' + r'\b|\b'.join(query_words) + r'\b)', r'**\1**', text, flags=re.IGNORECASE)
-
-            st.write(f"{match['score']:.2f}: {sutta_url}")
-            st.markdown(highlighted_text)  # Streamlit uses markdown
+        st.write(f"{match['score']:.2f}: {sutta_url}")
+        st.markdown(highlighted_text)
+elif submit_button and not search_query:
+    st.write('Please enter a search query')
