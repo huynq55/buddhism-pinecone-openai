@@ -1,6 +1,27 @@
 import streamlit as st
 import openai
 import pinecone
+import torch
+
+from transformers import AutoTokenizer
+sparse_model_id = 'naver/splade-cocondenser-ensembledistil'
+
+tokenizer = AutoTokenizer.from_pretrained(sparse_model_id)
+
+from splade.models.transformer_rep import Splade
+
+sparse_model = Splade(sparse_model_id, agg='max')
+sparse_model.eval()
+
+def get_sparse_vector(text):
+    tokens = tokenizer(text, return_tensors='pt')
+    with torch.no_grad():
+        sparse_emb = sparse_model(
+            d_kwargs=tokens.to('cpu')
+        )['d_rep'].squeeze()
+        indices = sparse_emb.nonzero().squeeze().cpu().tolist()
+        values = sparse_emb[indices].cpu().tolist()
+        return {'indices': indices, 'values': values}
 
 # Pinecone and OpenAI setup
 pinecone_api_key = st.secrets['PINECONE_API_KEY']
@@ -31,8 +52,12 @@ if submit_button:
         # Use OpenAI to process the query
         query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
 
+        
+        # Get sparse vector
+        sparse_vector = get_sparse_vector(search_query)
+
         # Search in Pinecone
-        search_results = pinecone_index.query([query_embedding], top_k=10, include_metadata=True)
+        search_results = pinecone_index.query(vector=query_embedding, sparse_vector=sparse_vector, top_k=10, include_metadata=True)
 
         base_url = "https://suttacentral.net/{}/en/sujato"
 
