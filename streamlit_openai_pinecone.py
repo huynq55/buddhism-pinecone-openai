@@ -52,9 +52,8 @@ if submit_button:
             # Extract text from metadata
             text = match['metadata']['text']
 
-            # Highlight matching words
-            words = re.findall(r'\w+', text.lower())
-            highlighted_text = ' '.join(f"**{word}**" if word in query_words else word for word in words)
+            # Highlight matching words, preserving original formatting
+            highlighted_text = re.sub(r'(\b' + r'\b|\b'.join(query_words) + r'\b)', r'**\1**', text, flags=re.IGNORECASE)
 
             st.write(f"{match['score']:.2f}: {sutta_url}")
             st.markdown(highlighted_text)  # Streamlit uses markdown
