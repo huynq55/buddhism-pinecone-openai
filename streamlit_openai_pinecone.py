@@ -65,7 +65,8 @@ if submit_button and search_query:
         print(text)
         highlighted_text = re.sub(r'(\b' + r'\b|\b'.join(query_words) + r'\b)', r'**\1**', text, flags=re.IGNORECASE)
 
-        st.write(f"{match['score']:.2f}: {sutta_url}")
+        #st.write(f"{match['score']:.2f}: {sutta_url}")
+        st.write(f"{match['score']:.2f}")
         st.markdown(highlighted_text)
 elif submit_button and not search_query:
     st.write('Please enter a search query')
