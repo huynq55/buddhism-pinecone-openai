@@ -40,7 +40,6 @@ with st.form(key='search_form'):
 word_extractor = re.compile(r'\w+')
 
 if submit_button and search_query:
-    #query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
     query_embedding = client.embeddings.create(input = [search_query], model="text-embedding-ada-002").data[0].embedding
     sparse_vector = get_sparse_vector(search_query)
     search_results = pinecone_index.query(vector=query_embedding, sparse_vector=sparse_vector, top_k=10, include_metadata=True)
@@ -49,7 +48,7 @@ if submit_button and search_query:
     query_words = set(word_extractor.findall(search_query.lower()))
 
     for match in search_results['matches']:
-        sutta_url = base_url.format(match['metadata']['sutta'].lower())
+        #sutta_url = base_url.format(match['metadata']['sutta'].lower())
         text = match['metadata']['text']
         highlighted_text = re.sub(r'(\b' + r'\b|\b'.join(query_words) + r'\b)', r'**\1**', text, flags=re.IGNORECASE)
 
