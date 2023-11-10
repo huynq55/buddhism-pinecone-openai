@@ -41,7 +41,7 @@ word_extractor = re.compile(r'\w+')
 
 if submit_button and search_query:
     #query_embedding = openai.Embedding.create(input=[search_query], model="text-embedding-ada-002")['data'][0]['embedding']
-    query_embedding = client.embeddings.create(input = [search_query], model="text-embedding-ada-002")['data'][0]['embedding']
+    query_embedding = client.embeddings.create(input = [search_query], model="text-embedding-ada-002").data[0].embedding
     sparse_vector = get_sparse_vector(search_query)
     search_results = pinecone_index.query(vector=query_embedding, sparse_vector=sparse_vector, top_k=10, include_metadata=True)
 
