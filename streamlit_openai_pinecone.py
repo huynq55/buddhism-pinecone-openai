@@ -49,7 +49,8 @@ if submit_button and search_query:
 
     for match in search_results['matches']:
         #sutta_url = base_url.format(match['metadata']['sutta'].lower())
-        text = match['metadata']['text']
+        #text = match['metadata']['text']
+        text = match['text']
         highlighted_text = re.sub(r'(\b' + r'\b|\b'.join(query_words) + r'\b)', r'**\1**', text, flags=re.IGNORECASE)
 
         st.write(f"{match['score']:.2f}: {sutta_url}")
